@@ -54,7 +54,7 @@ fi
 
 or with a cute whale emoji, own history and the launch command `ros`
 
-`
+```
 if [[ -n "$DOCKER" ]]; then
     # Settings for inside of the docker
     export PROMPT="%K{black} 🐋 %K{blue}%F{black}$PROMPT"  # Prefix the prompt with DOCKER
@@ -68,6 +68,6 @@ else
         $HOME/Projekt/rosdocked/connect $@
     }
 fi
-`
+```
 
 in your `.bashrc` or `.zshrc`.
