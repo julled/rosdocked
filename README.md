@@ -52,4 +52,22 @@ else
 fi
 ```
 
+or with a cute whale emoji, own history and the launch command `ros`
+
+`
+if [[ -n "$DOCKER" ]]; then
+    # Settings for inside of the docker
+    export PROMPT="%K{black} 🐋 %K{blue}%F{black}$PROMPT"  # Prefix the prompt with DOCKER
+    export HISTFILE=$HOME/.zsh_history_docker
+    source /opt/ros/melodic/setup.zsh
+    clear
+else
+    # Settings for outside of the docker
+    function ros(){
+        clear
+        $HOME/Projekt/rosdocked/connect $@
+    }
+fi
+`
+
 in your `.bashrc` or `.zshrc`.
