@@ -1,4 +1,7 @@
-FROM ubuntu:18.04
+FROM osrf/ros:noetic-desktop
+# The OSRF ROS Noetic containers use the root user.
+# Therefore, the following commands are executed as root up until the
+# USER user statement.
 
 # Arguments
 ARG user
@@ -7,33 +10,52 @@ ARG home
 ARG workspace
 ARG shell
 
-# Basic Utilities
-RUN apt-get -y update && apt-get install -y apt-utils eatmydata && eatmydata apt-get -y upgrade && eatmydata apt-get install -y zsh screen tmux tree sudo ssh synaptic htop vim tig ipython ipython3 less ranger gdb iproute2 iputils-ping vlc beignet wget gnupg2 mpv
+# We love UTF!
+ENV LANG C.UTF-8
 
-RUN wget http://packages.bit-bots.de/key.asc -O- | apt-key add -
-RUN echo "deb http://packages.bit-bots.de bionic main" > /etc/apt/sources.list.d/ros.list
+RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
+
+RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+RUN apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
 RUN apt-get update
+RUN apt-get install -y ros-noetic-image-transport-plugins ros-noetic-vision-msgs ros-noetic-camera-calibration ros-noetic-camera-calibration-parsers ros-noetic-camera-info-manager ros-noetic-video-stream-opencv ros-noetic-plotjuggler
 
-# Additional development tools
-RUN apt-get install -y x11-apps python3-pip build-essential
+RUN set -x \
+	    && useradd -ms /bin/bash ${user} \
+        && echo "${user}:${user}" | chpasswd && adduser ${user} sudo \
+        && echo "${user} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+        
+# Install some handy tools.
+RUN set -x \
+        && apt-get update \
+#        && apt-get upgrade -y \
+        && apt-get install -y mesa-utils \ 
+        && apt-get install -y iputils-ping \ 
+        && apt-get install -y apt-transport-https ca-certificates \
+        && apt-get install -y openssh-server python3-pip exuberant-ctags \
+        && apt-get install -y git vim tmux nano htop sudo curl wget gnupg2 tree gdb less ssh zsh \
+        && apt-get install -y  bash-completion \
+        && pip3 install powerline-shell  \
+        && rm -rf /var/lib/apt/lists/* 
+#        && useradd -ms /bin/bash user \
+#        && echo "user:user" | chpasswd && adduser user sudo \
+#        && echo "user ALL=(ALL) NOPASSWD: ALL " >> /etc/sudoers
 
-# Additional custom dependencies
-ENV DEBIAN_FRONTEND=noninteractive
-RUN eatmydata apt-get install -y ros-melodic-control-msgs ros-melodic-controller-manager ros-melodic-effort-controllers ros-melodic-gazebo-dev ros-melodic-gazebo-msgs ros-melodic-gazebo-plugins ros-melodic-gazebo-ros ros-melodic-gazebo-ros-control ros-melodic-imu-complementary-filter ros-melodic-imu-sensor-controller ros-melodic-joint-state-controller ros-melodic-joint-trajectory-controller ros-melodic-joy ros-melodic-moveit-ros-control-interface ros-melodic-moveit-ros-move-group ros-melodic-moveit-ros-planning ros-melodic-moveit-ros-planning-interface ros-melodic-moveit-ros-robot-interaction ros-melodic-moveit-simple-controller-manager ros-melodic-navigation ros-melodic-pointcloud-to-laserscan ros-melodic-position-controllers ros-melodic-robot-controllers ros-melodic-robot-localization ros-melodic-ros-control ros-melodic-ros-controllers ros-melodic-rosdoc-lite ros-melodic-rqt-controller-manager ros-melodic-velocity-controllers ros-melodic-yocs-velocity-smoother
-RUN apt-get install -y libncurses5-dev uvcdynctrl python3-yaml python3-opencv python3-numpy ros-melodic-imu-tools
+RUN apt-get install -y python3-yaml python3-opencv python3-numpy 
+RUN pip3 install scipy numpy imutils pyyaml pymavlink # pycairo pygobject
 
-# Python modules
-RUN pip3 install tensorflow git+https://github.com/catkin/catkin_tools.git
+# The OSRF contianer didn't link python3 to python, causing ROS scripts to fail.
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
-# Mount the user's home directory
-VOLUME "${home}"
+# Install VSCode
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
+RUN install -o root -g root -m 644 microsoft.gpg /usr/share/keyrings/microsoft-archive-keyring.gpg
+RUN sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-archive-keyring.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
+RUN apt-get install -y apt-transport-https
+RUN apt-get update
+RUN apt-get install -y code 
 
-# Clone user into docker image and set up X11 sharing
-RUN \
-  echo "${user}:x:${uid}:${uid}:${user},,,:${home}:${shell}" >> /etc/passwd && \
-  echo "${user}:x:${uid}:" >> /etc/group && \
-  echo "${user} ALL=(ALL) NOPASSWD: ALL" > "/etc/sudoers.d/${user}" && \
-  chmod 0440 "/etc/sudoers.d/${user}"
+RUN git clone https://github.com/catkin/catkin_tools.git &&  cd catkin_tools && pip3 install -r requirements.txt --upgrade && python setup.py install --record install_manifest.txt
 
 # Switch to user
 USER "${user}"
