@@ -31,6 +31,7 @@ else
       -v "/tmp/.X11-unix:/tmp/.X11-unix:rw"\
       -v "/run/media/:/media:z"\
       --device=$VIDEO_DEVICE:/dev/video0 \
+      -v /dev:/dev \
       --group-add=$VIDEO_GROUP \
       --cap-add=SYS_PTRACE \
       --security-opt seccomp=unconfined \

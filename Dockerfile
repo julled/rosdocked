@@ -47,6 +47,17 @@ RUN pip3 install scipy numpy imutils pyyaml pymavlink # pycairo pygobject
 # The OSRF contianer didn't link python3 to python, causing ROS scripts to fail.
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
+# Install gazebo
+RUN sudo wget https://packages.osrfoundation.org/gazebo.gpg -O /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null
+RUN sudo apt-get update
+RUN sudo apt-get install -y gz-garden
+#from http://wiki.ros.org/action/login/docker/Tutorials/Hardware%20Acceleration#ATI.2FAMD
+RUN \ 
+  apt-get update && \
+  apt-get -y install libgl1-mesa-glx libgl1-mesa-dri && \
+  rm -rf /var/lib/apt/lists/*
+
 # Install VSCode
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
 RUN install -o root -g root -m 644 microsoft.gpg /usr/share/keyrings/microsoft-archive-keyring.gpg
