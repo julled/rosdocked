@@ -48,10 +48,10 @@ RUN pip3 install scipy numpy imutils pyyaml pymavlink # pycairo pygobject
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # Install gazebo
-RUN sudo wget https://packages.osrfoundation.org/gazebo.gpg -O /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
-RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null
-RUN sudo apt-get update
-RUN sudo apt-get install -y gz-garden
+RUN sudo sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list'
+RUN wget http://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
+RUN sudo apt update
+RUN sudo apt install -y gazebo9 libgazebo9-dev
 #from http://wiki.ros.org/action/login/docker/Tutorials/Hardware%20Acceleration#ATI.2FAMD
 RUN \ 
   apt-get update && \
